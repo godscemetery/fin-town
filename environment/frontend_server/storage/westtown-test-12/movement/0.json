@@ -1,0 +1,31 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": null,
+      "pronunciatio": "",
+      "description": "",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        123,
+        57
+      ],
+      "pronunciatio": "\ud83d\ude34",
+      "description": "asleep @ the Ville:Dorm for Oak Hill College:kitchen:<random>",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        127,
+        46
+      ],
+      "pronunciatio": "\ud83d\ude34",
+      "description": "asleep @ the Ville:Dorm for Oak Hill College:kitchen:<random>",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 00:00:00"
+  }
+}
