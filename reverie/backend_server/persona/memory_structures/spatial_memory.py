@@ -82,45 +82,95 @@ class MemoryTree:
     return x
 
 
-  def get_str_accessible_arena_game_objects(self, act_address):
+  def get_str_accessible_arena_game_objects(self, arena):
     """
-    根据当前 world / sector / arena，返回这个区域可交互的物体。
-    为了适配大模型输出，自动清理 { } 和大小写等问题，
-    并且允许 act_address 是 (world, sector, arena, ...) 这种长度>3 的元组。
+    输入保持与原版一致：arena 是 "world:sector:arena" 的字符串
+    增强：
+    - 允许多段（取前三段）
+    - 去掉 {}
+    - 大小写兜底
+    - 在失败时打印 tree 结构用于定位 <random> 根因
     """
-
-    # ---- 1. 安全地解析 act_address ----
-    # 允许 act_address 是 tuple/list，长度>=3，多余的直接丢掉
-    if isinstance(act_address, (list, tuple)):
-        if len(act_address) >= 3:
-            curr_world, curr_sector, curr_arena = act_address[0], act_address[1], act_address[2]
-        else:
-            # 不够 3 个元素，信息不全，直接返回空字符串避免崩溃
-            return ""
-    else:
-        # 不是序列（比如 None 或字符串），也直接放弃
+    debug = False
+    # ---------- 1. 基本合法性 ----------
+    if not isinstance(arena, str):
+        if debug:
+            print("[TREE DEBUG] arena is not str:", repr(arena))
         return ""
 
-    # ---- 2. 统一清洗 arena 名字：去掉大括号、前后空格，转小写 ----
+    parts = arena.split(":")
+    if len(parts) < 3:
+        if debug:
+            print("[TREE DEBUG] arena split < 3:", repr(arena))
+        return ""
+
+    curr_world, curr_sector, curr_arena = parts[0], parts[1], parts[2]
+
+    if not curr_arena:
+        if debug:
+            print("[TREE DEBUG] empty curr_arena:", repr(arena))
+        return ""
+
+    # ---------- 2. arena 名称清洗 ----------
     raw_arena = str(curr_arena).strip()
     cleaned_arena = raw_arena.strip("{}").strip()
-    cleaned_arena_lower = cleaned_arena.lower()
 
-    # 取出对应 sector 下的字典
-    sector_dict = self.tree.get(curr_world, {}).get(curr_sector, {})
-
-    # 依次尝试几种可能的 key 形式
-    for key in (
+    candidates = [
         raw_arena,
         raw_arena.lower(),
         cleaned_arena,
-        cleaned_arena_lower,
-    ):
-        if key in sector_dict:
-            return ", ".join(list(sector_dict[key]))
+        cleaned_arena.lower(),
+    ]
 
-    # 实在找不到，就返回空字符串，不让仿真直接崩
+    # ---------- 3. world / sector 查找 ----------
+    if curr_world not in self.tree:
+        if debug:
+            print("[TREE DEBUG] world not found:", repr(curr_world))
+            print("[TREE DEBUG] available worlds:", list(self.tree.keys())[:10])
+            print("[TREE DEBUG] original arena:", repr(arena))
+        return ""
+
+    if curr_sector not in self.tree[curr_world]:
+        if debug:
+            print("[TREE DEBUG] sector not found:", repr(curr_sector))
+            print("[TREE DEBUG] available sectors:",
+                  list(self.tree[curr_world].keys())[:10])
+            print("[TREE DEBUG] original arena:", repr(arena))
+        return ""
+
+    sector_dict = self.tree[curr_world][curr_sector]
+    if not sector_dict:
+        if debug:
+            print("[TREE DEBUG] sector exists but empty:", repr(curr_sector))
+        return ""
+
+    # ---------- 4. arena key 匹配 ----------
+    for key in candidates:
+        if key in sector_dict:
+            try:
+                return ", ".join(list(sector_dict[key]))
+            except Exception as e:
+                if debug:
+                    print("[TREE DEBUG] error reading objects for key:", repr(key))
+                    print("[TREE DEBUG] exception:", e)
+                return ""
+
+    # ---------- 5. 走到这里 = 真正导致 <random> 的地方 ----------
+    if debug:
+        print("[TREE DEBUG] arena not found in sector")
+        print("  world  =", repr(curr_world))
+        print("  sector =", repr(curr_sector))
+        print("  arena(raw)    =", repr(raw_arena))
+        print("  arena(clean) =", repr(cleaned_arena))
+        print("  tried keys   =", candidates)
+        print("  available arenas =", list(sector_dict.keys()))
+        print("  original arena string =", repr(arena))
+
     return ""
+
+
+
+
 
 
 

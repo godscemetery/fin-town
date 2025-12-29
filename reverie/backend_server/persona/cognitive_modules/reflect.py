@@ -146,11 +146,11 @@ def reflection_trigger(persona):
     True if we are running a new reflection. 
     False otherwise. 
   """
-  print (persona.scratch.name, "persona.scratch.importance_trigger_curr::", persona.scratch.importance_trigger_curr)
-  print (persona.scratch.importance_trigger_max)
-
+  
   if (persona.scratch.importance_trigger_curr <= 0 and 
       [] != persona.a_mem.seq_event + persona.a_mem.seq_thought): 
+    print (persona.scratch.name, "persona.scratch.importance_trigger_curr::", persona.scratch.importance_trigger_curr)
+    print (persona.scratch.importance_trigger_max)
     return True 
   return False
 
@@ -180,9 +180,12 @@ def reflect(persona):
   Output: 
     None
   """
-  if reflection_trigger(persona): 
+  if reflection_trigger(persona):
+    print("[REFLECT] start", persona.scratch.name, persona.scratch.curr_time)
     run_reflect(persona)
+    print("[REFLECT] done", persona.scratch.name)
     reset_reflection_counter(persona)
+    print("[REFLECT] reset", persona.scratch.name, persona.scratch.importance_trigger_curr)
 
 
 

@@ -1,0 +1,22 @@
+{
+  "default": {
+    "base_url": "http://112.124.97.183:8080",
+    "username": "lhr",
+    "password": "12345678"
+  },
+  "Isabella Rodriguez": {
+    "base_url": "http://112.124.97.183:8081",
+    "username": "agent1",
+    "password": "12345678"
+  },
+  "Klaus Mueller": {
+    "base_url": "http://112.124.97.183:8082",
+    "username": "agent2",
+    "password": "12345678"
+  },
+  "Maria Lopez": {
+    "base_url": "http://112.124.97.183:8083",
+    "username": "agent3",
+    "password": "12345678"
+  }
+}

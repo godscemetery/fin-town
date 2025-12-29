@@ -1,0 +1,202 @@
+[
+  {
+    "id": "N0001",
+    "date": "2025-12-01",
+    "title": "Regulators Emphasize Improving Listed Company Quality",
+    "summary": "Regulatory authorities stressed the importance of improving the overall quality of listed companies, enhancing disclosure transparency, encouraging long-term capital participation, and strengthening dividend and share buyback mechanisms.",
+    "tags": ["regulation", "listed_companies", "capital_market"],
+    "region": "CN",
+    "importance": 0.72,
+    "entities": ["regulators", "listed companies", "long-term capital"]
+  },
+  {
+    "id": "N0002",
+    "date": "2025-12-02",
+    "title": "Increase in Share Buybacks Sparks Discussion on Value Recovery",
+    "summary": "Several listed companies announced share buyback plans. Market participants believe buybacks and dividends may help stabilize expectations, though corporate cash flow and earnings quality remain key concerns.",
+    "tags": ["buyback", "dividend", "market_sentiment"],
+    "region": "CN",
+    "importance": 0.55,
+    "entities": ["listed companies", "cash flow", "buyback plans"]
+  },
+  {
+    "id": "N0003",
+    "date": "2025-12-03",
+    "title": "Volatility in Tech Sector as Funds Shift Back to Fundamentals",
+    "summary": "Technology-related sectors experienced increased volatility, with some funds shifting away from short-term thematic trades toward companies with stronger fundamentals and earnings visibility.",
+    "tags": ["technology", "style_rotation", "fundamentals"],
+    "region": "CN",
+    "importance": 0.50,
+    "entities": ["technology sector", "funds", "earnings"]
+  },
+  {
+    "id": "N0004",
+    "date": "2025-12-04",
+    "title": "Local Governments Launch Financing Support Package for Tech Firms",
+    "summary": "A local government released a financing support package for technology firms, including loan-investment linkage, interest subsidies, and credit enhancement measures to improve access to funding.",
+    "tags": ["local_policy", "technology", "financing"],
+    "region": "CN",
+    "importance": 0.62,
+    "entities": ["local government", "tech firms", "loan-investment linkage"]
+  },
+  {
+    "id": "N0005",
+    "date": "2025-12-05",
+    "title": "Debate Intensifies Over Compliance Boundaries of Market Value Management",
+    "summary": "Discussions around market value management have intensified, with experts emphasizing the need to distinguish compliant investor relations and disclosure practices from improper market manipulation.",
+    "tags": ["market_value_management", "compliance", "governance"],
+    "region": "CN",
+    "importance": 0.78,
+    "entities": ["market value management", "information disclosure", "corporate governance"]
+  },
+  {
+    "id": "N0006",
+    "date": "2025-12-06",
+    "title": "Rising Competition Pushes New Energy Sector Into Shakeout Phase",
+    "summary": "Competition across the new energy supply chain has intensified, leading to pricing pressure and expectations of capacity exits. Companies are focusing on cost control, technological upgrades, and overseas expansion.",
+    "tags": ["new_energy", "competition", "capacity"],
+    "region": "CN",
+    "importance": 0.60,
+    "entities": ["new energy", "capacity exit", "overseas markets"]
+  },
+  {
+    "id": "N0007",
+    "date": "2025-12-07",
+    "title": "Consumption Recovery Remains Uneven Across Sectors",
+    "summary": "Recent data suggest an uneven consumption recovery, with staple consumption remaining stable while discretionary spending stays cautious. Employment and income expectations remain key drivers.",
+    "tags": ["consumption", "macro", "policy"],
+    "region": "CN",
+    "importance": 0.45,
+    "entities": ["consumption", "employment", "income expectations"]
+  },
+  {
+    "id": "N0008",
+    "date": "2025-12-08",
+    "title": "Bond Market Volatility Prompts Institutions to Adjust Duration",
+    "summary": "Bond market yields fluctuated, prompting some institutional investors to adjust portfolio duration and credit exposure amid changing policy expectations and liquidity conditions.",
+    "tags": ["bonds", "interest_rates", "institutions"],
+    "region": "CN",
+    "importance": 0.48,
+    "entities": ["bond market", "duration", "liquidity"]
+  },
+  {
+    "id": "N0009",
+    "date": "2025-12-09",
+    "title": "Rise in M&A Deals Shifts Focus to Post-Merger Integration",
+    "summary": "An increase in merger and acquisition activity has shifted market attention toward post-merger integration capabilities and the realization of operational synergies.",
+    "tags": ["mergers", "acquisitions", "integration"],
+    "region": "CN",
+    "importance": 0.58,
+    "entities": ["M&A", "synergies", "integration"]
+  },
+  {
+    "id": "N0010",
+    "date": "2025-12-10",
+    "title": "AI Adoption Accelerates, While Profitability Remains Uneven",
+    "summary": "The pace of AI application adoption has accelerated, with some firms reporting strong order growth. However, profitability remains uneven, and investors are focusing on sustainable revenue models.",
+    "tags": ["AI", "industry", "profitability"],
+    "region": "CN",
+    "importance": 0.63,
+    "entities": ["AI applications", "orders", "revenue"]
+  },
+  {
+    "id": "N0011",
+    "date": "2025-12-11",
+    "title": "Early Signs of Stabilization Emerge in Property-Related Sectors",
+    "summary": "Some indicators suggest early stabilization in property-related sectors, though concerns remain around sales sustainability, local government debt, and corporate financing conditions.",
+    "tags": ["property", "cash_flow", "policy"],
+    "region": "CN",
+    "importance": 0.52,
+    "entities": ["property sector", "financing support", "cash flow"]
+  },
+  {
+    "id": "N0012",
+    "date": "2025-12-12",
+    "title": "Export Outlook Fluctuates as Firms Diversify Markets",
+    "summary": "Export-related sectors face a fluctuating outlook, prompting firms to emphasize market diversification and supply chain resilience, including overseas capacity expansion.",
+    "tags": ["exports", "supply_chain", "overseas"],
+    "region": "CN",
+    "importance": 0.46,
+    "entities": ["exports", "supply chain resilience", "overseas capacity"]
+  },
+  {
+    "id": "N0013",
+    "date": "2025-12-13",
+    "title": "Banks Expand Credit Support for SMEs and Tech Companies",
+    "summary": "Major banks announced plans to expand credit support for small and medium-sized enterprises and technology firms through dedicated products and digital risk management tools.",
+    "tags": ["banks", "credit", "SMEs", "technology"],
+    "region": "CN",
+    "importance": 0.57,
+    "entities": ["banks", "SMEs", "digital risk management"]
+  },
+  {
+    "id": "N0014",
+    "date": "2025-12-14",
+    "title": "Stricter ESG Disclosure Requirements Push Firms to Catch Up",
+    "summary": "Stricter ESG disclosure requirements are prompting more companies to establish governance frameworks and indicator systems, with growing emphasis on verifiable and consistent data.",
+    "tags": ["ESG", "disclosure", "governance"],
+    "region": "CN",
+    "importance": 0.66,
+    "entities": ["ESG", "disclosure requirements", "governance framework"]
+  },
+  {
+    "id": "N0015",
+    "date": "2025-12-15",
+    "title": "Fund Managers Split on Defensive Versus Offensive Strategies",
+    "summary": "Some fund managers favor defensive allocations focused on high dividends and cash flow, while others expect a recovery in risk appetite and see opportunities in growth stocks.",
+    "tags": ["funds", "strategy", "style"],
+    "region": "CN",
+    "importance": 0.40,
+    "entities": ["fund managers", "high dividends", "growth stocks"]
+  },
+  {
+    "id": "N0016",
+    "date": "2025-12-16",
+    "title": "Industry Association Releases Corporate Governance Best Practices",
+    "summary": "An industry association released a set of corporate governance best practice recommendations, emphasizing board effectiveness, incentive alignment, and disclosure quality.",
+    "tags": ["governance", "best_practices", "board"],
+    "region": "CN",
+    "importance": 0.61,
+    "entities": ["industry association", "board of directors", "incentives"]
+  },
+  {
+    "id": "N0017",
+    "date": "2025-12-17",
+    "title": "Mixed Market Reactions to Earnings Pre-Announcements",
+    "summary": "Several companies reported earnings pre-announcements above expectations, though share price reactions were mixed as investors focused on valuation levels and earnings sustainability.",
+    "tags": ["earnings", "preannouncement", "valuation"],
+    "region": "CN",
+    "importance": 0.53,
+    "entities": ["earnings guidance", "valuation", "expectation gap"]
+  },
+  {
+    "id": "N0018",
+    "date": "2025-12-18",
+    "title": "Quantitative Trading Draws Attention to Volatility Management",
+    "summary": "Discussions around quantitative trading intensified, with investors paying closer attention to market microstructure changes and the need for effective volatility management.",
+    "tags": ["quant", "volatility", "liquidity"],
+    "region": "CN",
+    "importance": 0.49,
+    "entities": ["quantitative trading", "market structure", "liquidity"]
+  },
+  {
+    "id": "N0019",
+    "date": "2025-12-19",
+    "title": "Forum Highlights Early-Stage Tech Investment and Exit Mechanisms",
+    "summary": "At a technology finance forum, participants discussed early-stage investment strategies and the importance of exit mechanisms, emphasizing patient capital and long-term funding.",
+    "tags": ["tech_finance", "forum", "exit_mechanism"],
+    "region": "CN",
+    "importance": 0.70,
+    "entities": ["technology finance", "patient capital", "capital markets"]
+  },
+  {
+    "id": "N0020",
+    "date": "2025-12-20",
+    "title": "Market Warns Against Concept-Driven Speculation",
+    "summary": "Regulators and institutions reiterated warnings against concept-driven speculation and information asymmetry risks, urging investors to focus on fundamentals and risk tolerance.",
+    "tags": ["risk", "speculation", "investor_education"],
+    "region": "CN",
+    "importance": 0.64,
+    "entities": ["risk warnings", "speculation", "investor protection"]
+  }
+]

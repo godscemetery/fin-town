@@ -9,6 +9,7 @@ import math
 import random 
 import sys
 import time
+import inspect
 sys.path.append('../../')
 
 from global_methods import *
@@ -134,6 +135,153 @@ def generate_hourly_schedule(persona, wake_up_hour):
   n_m1_hourly_compressed = []
   for task, duration in _n_m1_hourly_compressed: 
     n_m1_hourly_compressed += [[task, duration*60]]
+  # =========================================================
+  # [新增] 早晨插入“reading the news (10 min)”
+  # 规则：
+  # 1) 插在第一段非 sleeping 活动之前
+  # 2) 只插一次；如果当天计划里已经有 news/newspaper 相关词则跳过
+  # 3) 保持总时长不变：从紧随其后的活动里扣 10 分钟
+  # =========================================================
+  try:
+    # 如果当天已经安排过新闻相关活动，就不再插入
+    has_news = False
+    for t, d in n_m1_hourly_compressed:
+      tl = t.lower() if isinstance(t, str) else ""
+      if ("news" in tl) or ("newspaper" in tl):
+        has_news = True
+        break
+
+    if not has_news:
+      # 找到起床后的第一个活动块（第一段非 sleeping）
+      insert_idx = None
+      for i, (t, d) in enumerate(n_m1_hourly_compressed):
+        tl = t.lower() if isinstance(t, str) else ""
+        if tl != "sleeping":
+          insert_idx = i
+          break
+
+      if insert_idx is not None:
+        # 确保后面的活动时长足够扣 10 分钟
+        if n_m1_hourly_compressed[insert_idx][1] >= 10:
+          n_m1_hourly_compressed.insert(insert_idx, ["reading the news", 10])
+          n_m1_hourly_compressed[insert_idx + 1][1] -= 10
+        else:
+          # 极端情况：如果第一段活动 < 10min，就直接加在前面但不扣（避免负数）
+          n_m1_hourly_compressed.insert(insert_idx, ["reading the news", 10])
+  except Exception as e:
+    print("WARNING: failed to insert morning news into schedule:", e)
+
+
+  # =========================================================
+  # [新增] 早晨插入一次交易/看盘（默认 5 min）
+  # 规则：
+  # 1) 每天最多插入一次
+  # 2) 优先插在“reading the news”后面；否则插在起床后第一段非 sleeping 前面
+  # 3) 保持总时长不变：从插入点后的活动扣除 TRADE_MORNING_MIN
+  # =========================================================
+  try:
+    TRADE_MORNING_MIN = 5
+
+    # 是否已有 trade/market 块
+    has_trade = False
+    for t, d in n_m1_hourly_compressed:
+      tl = t.lower() if isinstance(t, str) else ""
+      if ("trade" in tl) or ("trading" in tl) or ("market" in tl) or ("portfolio" in tl):
+        has_trade = True
+        break
+
+    if not has_trade:
+      insert_idx = None
+
+      # 优先：插在 reading the news 后面
+      for i, (t, d) in enumerate(n_m1_hourly_compressed):
+        tl = t.lower() if isinstance(t, str) else ""
+        if ("reading the news" in tl) or (("news" in tl) or ("newspaper" in tl)):
+          insert_idx = i + 1
+          break
+
+      # 兜底：插在起床后第一段非 sleeping 前面
+      if insert_idx is None:
+        for i, (t, d) in enumerate(n_m1_hourly_compressed):
+          tl = t.lower() if isinstance(t, str) else ""
+          if tl != "sleeping":
+            insert_idx = i
+            break
+
+      if insert_idx is not None:
+        # 从插入点后面的活动扣 5 分钟，避免负数
+        if insert_idx < len(n_m1_hourly_compressed) and n_m1_hourly_compressed[insert_idx][1] >= TRADE_MORNING_MIN:
+          n_m1_hourly_compressed.insert(insert_idx, ["checking the market", TRADE_MORNING_MIN])
+          n_m1_hourly_compressed[insert_idx + 1][1] -= TRADE_MORNING_MIN
+        else:
+          n_m1_hourly_compressed.insert(insert_idx, ["checking the market", TRADE_MORNING_MIN])
+
+  except Exception as e:
+    print("WARNING: failed to insert morning trade into schedule:", e)
+
+  # =========================================================
+  # =========================================================
+  # [新增] 白天概率插入一次新闻（默认 5 min）
+  # 规则：
+  # 1) 触发窗口：12:00-16:00 之间的“第一段活动”处插入
+  # 2) 概率触发：NEWS_EXTRA_PROB
+  # 3) 每天最多额外插入一次（若当天已存在第二次 news 则跳过）
+  # 4) 保持总时长不变：从插入点后的活动扣除 NEWS_EXTRA_MIN
+  # =========================================================
+  try:
+    import random
+    import datetime
+
+    NEWS_EXTRA_PROB = 0.20   # 20% 概率（先保守）
+    NEWS_EXTRA_MIN  = 5      # 额外一次看 5 分钟
+
+    # 统计当天计划中“新闻块”的数量
+    news_count = 0
+    for t, d in n_m1_hourly_compressed:
+      tl = t.lower() if isinstance(t, str) else ""
+      if ("news" in tl) or ("newspaper" in tl):
+        news_count += 1
+
+    # 早晨那次通常已经有 1 次；我们只允许额外 +1
+    if news_count <= 1 and random.random() < NEWS_EXTRA_PROB:
+      # 需要一个“可推断的时间轴”来定位 12:00-16:00 的插入点
+      # 我们用 wake_up_hour 作为起点，把分钟块累加成“日内分钟”
+      # day_start_min = wake_up_hour*60 (相对 0:00 的分钟)
+      day_start_min = int(wake_up_hour) * 60
+
+      # 目标窗口（分钟）
+      win_start = 12 * 60
+      win_end   = 16 * 60
+
+      # 找到第一个落在窗口内的活动块 index
+      acc = day_start_min
+      insert_idx = None
+      for i, (t, d) in enumerate(n_m1_hourly_compressed):
+        block_start = acc
+        block_end = acc + int(d)
+        # 只要这个块和窗口有交集，我们就选择这里插入（更简单也更稳）
+        if block_end > win_start and block_start < win_end:
+          # 避免插到 sleeping 上（一般不会，但保险）
+          tl = t.lower() if isinstance(t, str) else ""
+          if tl != "sleeping":
+            insert_idx = i
+            break
+        acc = block_end
+
+      if insert_idx is not None:
+        # 从插入点后的活动扣减 5min，避免总时长变化
+        if n_m1_hourly_compressed[insert_idx][1] >= NEWS_EXTRA_MIN:
+          n_m1_hourly_compressed.insert(insert_idx, ["reading the news", NEWS_EXTRA_MIN])
+          n_m1_hourly_compressed[insert_idx + 1][1] -= NEWS_EXTRA_MIN
+        else:
+          # 极端情况：活动太短就直接插，不扣（避免负数）
+          n_m1_hourly_compressed.insert(insert_idx, ["reading the news", NEWS_EXTRA_MIN])
+
+  except Exception as e:
+    print("WARNING: failed to insert extra daytime news into schedule:", e)
+  # =========================================================
+
+
 
   return n_m1_hourly_compressed
 
@@ -217,8 +365,16 @@ def generate_action_game_object(act_desp, act_address, persona, maze):
   EXAMPLE OUTPUT: 
     "bed"
   """
-  if debug: print ("GNS FUNCTION: <generate_action_game_object>")
+  debug = True
+  if debug:
+        print("[ADDR TRACE] act_address =", repr(act_address))
+        # 打印是谁调用的（上一层）
+        frame = inspect.stack()[1]
+        print("[ADDR TRACE] called from:", frame.filename, "line", frame.lineno, "func", frame.function)
+        # 打印上面几层调用栈（可选）
+        traceback.print_stack(limit=8)
   if not persona.s_mem.get_str_accessible_arena_game_objects(act_address): 
+    print("[RANDOM ROOT] empty objects for act_address =", repr(act_address))
     return "<random>"
   return run_gpt_prompt_action_game_object(act_desp, persona, maze, act_address)[0]
 
@@ -336,92 +492,187 @@ def generate_decide_to_react(init_persona, target_persona, retrieved):
   return run_gpt_prompt_decide_to_react(init_persona, target_persona, retrieved)[0]
 
 
-def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur,  start_hour, end_hour): 
-  # Step 1: Setting up the core variables for the function. 
-  # <p> is the persona whose schedule we are editing right now. 
-  p = persona
-  # <today_min_pass> indicates the number of minutes that have passed today. 
-  today_min_pass = (int(p.scratch.curr_time.hour) * 60 
-                    + int(p.scratch.curr_time.minute) + 1)
+# def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur,  start_hour, end_hour): 
+#   # Step 1: Setting up the core variables for the function. 
+#   # <p> is the persona whose schedule we are editing right now. 
+#   p = persona
+#   # <today_min_pass> indicates the number of minutes that have passed today. 
+#   today_min_pass = (int(p.scratch.curr_time.hour) * 60 
+#                     + int(p.scratch.curr_time.minute) + 1)
   
-  # Step 2: We need to create <main_act_dur> and <truncated_act_dur>. 
-  # These are basically a sub-component of <f_daily_schedule> of the persona,
-  # but focusing on the current decomposition. 
-  # Here is an example for <main_act_dur>: 
-  # ['wakes up and completes her morning routine (wakes up at 6am)', 5]
-  # ['wakes up and completes her morning routine (wakes up at 6am)', 5]
-  # ['wakes up and completes her morning routine (uses the restroom)', 5]
-  # ['wakes up and completes her morning routine (washes her ...)', 10]
-  # ['wakes up and completes her morning routine (makes her bed)', 5]
-  # ['wakes up and completes her morning routine (eats breakfast)', 15]
-  # ['wakes up and completes her morning routine (gets dressed)', 10]
-  # ['wakes up and completes her morning routine (leaves her ...)', 5]
-  # ['wakes up and completes her morning routine (starts her ...)', 5]
-  # ['preparing for her day (waking up at 6am)', 5]
-  # ['preparing for her day (making her bed)', 5]
-  # ['preparing for her day (taking a shower)', 15]
-  # ['preparing for her day (getting dressed)', 5]
-  # ['preparing for her day (eating breakfast)', 10]
-  # ['preparing for her day (brushing her teeth)', 5]
-  # ['preparing for her day (making coffee)', 5]
-  # ['preparing for her day (checking her email)', 5]
-  # ['preparing for her day (starting to work on her painting)', 5]
-  # 
-  # And <truncated_act_dur> concerns only until where an event happens. 
-  # ['wakes up and completes her morning routine (wakes up at 6am)', 5]
-  # ['wakes up and completes her morning routine (wakes up at 6am)', 2]
+#   # Step 2: We need to create <main_act_dur> and <truncated_act_dur>. 
+#   # These are basically a sub-component of <f_daily_schedule> of the persona,
+#   # but focusing on the current decomposition. 
+#   # Here is an example for <main_act_dur>: 
+#   # ['wakes up and completes her morning routine (wakes up at 6am)', 5]
+#   # ['wakes up and completes her morning routine (wakes up at 6am)', 5]
+#   # ['wakes up and completes her morning routine (uses the restroom)', 5]
+#   # ['wakes up and completes her morning routine (washes her ...)', 10]
+#   # ['wakes up and completes her morning routine (makes her bed)', 5]
+#   # ['wakes up and completes her morning routine (eats breakfast)', 15]
+#   # ['wakes up and completes her morning routine (gets dressed)', 10]
+#   # ['wakes up and completes her morning routine (leaves her ...)', 5]
+#   # ['wakes up and completes her morning routine (starts her ...)', 5]
+#   # ['preparing for her day (waking up at 6am)', 5]
+#   # ['preparing for her day (making her bed)', 5]
+#   # ['preparing for her day (taking a shower)', 15]
+#   # ['preparing for her day (getting dressed)', 5]
+#   # ['preparing for her day (eating breakfast)', 10]
+#   # ['preparing for her day (brushing her teeth)', 5]
+#   # ['preparing for her day (making coffee)', 5]
+#   # ['preparing for her day (checking her email)', 5]
+#   # ['preparing for her day (starting to work on her painting)', 5]
+#   # 
+#   # And <truncated_act_dur> concerns only until where an event happens. 
+#   # ['wakes up and completes her morning routine (wakes up at 6am)', 5]
+#   # ['wakes up and completes her morning routine (wakes up at 6am)', 2]
+#   main_act_dur = []
+#   truncated_act_dur = []
+#   dur_sum = 0 # duration sum
+#   count = 0 # enumerate count
+#   truncated_fin = False 
+
+#   print ("DEBUG::: ", persona.scratch.name)
+#   for act, dur in p.scratch.f_daily_schedule: 
+#     if (dur_sum >= start_hour * 60) and (dur_sum < end_hour * 60): 
+#       main_act_dur += [[act, dur]]
+#       if dur_sum <= today_min_pass:
+#         truncated_act_dur += [[act, dur]]
+#       elif dur_sum > today_min_pass and not truncated_fin: 
+#         # We need to insert that last act, duration list like this one: 
+#         # e.g., ['wakes up and completes her morning routine (wakes up...)', 2]
+#         truncated_act_dur += [[p.scratch.f_daily_schedule[count][0], 
+#                                dur_sum - today_min_pass]] 
+#         truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
+#         # truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass + 1) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
+#         print ("DEBUG::: ", truncated_act_dur)
+
+#         # truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
+#         truncated_fin = True
+#     dur_sum += dur
+#     count += 1
+
+#   persona_name = persona.name 
+#   main_act_dur = main_act_dur
+
+#   x = truncated_act_dur[-1][0].split("(")[0].strip() + " (on the way to " + truncated_act_dur[-1][0].split("(")[-1][:-1] + ")"
+#   truncated_act_dur[-1][0] = x 
+
+#   if "(" in truncated_act_dur[-1][0]: 
+#     inserted_act = truncated_act_dur[-1][0].split("(")[0].strip() + " (" + inserted_act + ")"
+
+#   # To do inserted_act_dur+1 below is an important decision but I'm not sure
+#   # if I understand the full extent of its implications. Might want to 
+#   # revisit. 
+#   truncated_act_dur += [[inserted_act, inserted_act_dur]]
+#   start_time_hour = (datetime.datetime(2022, 10, 31, 0, 0) 
+#                    + datetime.timedelta(hours=start_hour))
+#   end_time_hour = (datetime.datetime(2022, 10, 31, 0, 0) 
+#                    + datetime.timedelta(hours=end_hour))
+
+#   if debug: print ("GNS FUNCTION: <generate_new_decomp_schedule>")
+#   return run_gpt_prompt_new_decomp_schedule(persona, 
+#                                             main_act_dur, 
+#                                             truncated_act_dur, 
+#                                             start_time_hour,
+#                                             end_time_hour,
+#                                             inserted_act,
+#                                             inserted_act_dur)[0]
+
+
+def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur, start_hour, end_hour):
+  p = persona
+  today_min_pass = (int(p.scratch.curr_time.hour) * 60
+                    + int(p.scratch.curr_time.minute) + 1)
+
   main_act_dur = []
   truncated_act_dur = []
-  dur_sum = 0 # duration sum
-  count = 0 # enumerate count
-  truncated_fin = False 
+  dur_sum = 0
+  count = 0
+  truncated_fin = False
 
-  print ("DEBUG::: ", persona.scratch.name)
-  for act, dur in p.scratch.f_daily_schedule: 
-    if (dur_sum >= start_hour * 60) and (dur_sum < end_hour * 60): 
+  print("DEBUG::: ", persona.scratch.name)
+
+  for act, dur in p.scratch.f_daily_schedule:
+    if (dur_sum >= start_hour * 60) and (dur_sum < end_hour * 60):
       main_act_dur += [[act, dur]]
-      if dur_sum <= today_min_pass:
-        truncated_act_dur += [[act, dur]]
-      elif dur_sum > today_min_pass and not truncated_fin: 
-        # We need to insert that last act, duration list like this one: 
-        # e.g., ['wakes up and completes her morning routine (wakes up...)', 2]
-        truncated_act_dur += [[p.scratch.f_daily_schedule[count][0], 
-                               dur_sum - today_min_pass]] 
-        truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
-        # truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass + 1) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
-        print ("DEBUG::: ", truncated_act_dur)
 
-        # truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
+      # ------------------------------------------------------------
+      # [MOD] 修复截断逻辑：用“动作结束时间”判断是否已发生完
+      # 原逻辑用 dur_sum <= today_min_pass 会把“跨越当前时刻”的动作整段塞进 truncated
+      # ------------------------------------------------------------
+      act_start = dur_sum
+      act_end = dur_sum + dur
+
+      if act_end <= today_min_pass:
+        # 该动作完全发生在当前时间之前：保留完整 dur
+        truncated_act_dur += [[act, dur]]
+
+      elif (act_start < today_min_pass < act_end) and (not truncated_fin):
+        # 该动作跨越当前时间：只保留已经发生的部分
+        # [MOD] 关键：这里应该是 “已发生分钟数”
+        done = max(0, today_min_pass - act_start)
+        truncated_act_dur += [[act, done]]
         truncated_fin = True
+        print("DEBUG::: truncated_act_dur cross:", truncated_act_dur)
+
+      else:
+        # 该动作在当前时间之后：不进 truncated
+        pass
+
     dur_sum += dur
     count += 1
 
-  persona_name = persona.name 
+  persona_name = persona.name
   main_act_dur = main_act_dur
 
-  x = truncated_act_dur[-1][0].split("(")[0].strip() + " (on the way to " + truncated_act_dur[-1][0].split("(")[-1][:-1] + ")"
-  truncated_act_dur[-1][0] = x 
+  # ------------------------------------------------------------
+  # [MOD] 兜底：防止 truncated_act_dur 为空导致 truncated_act_dur[-1] 越界
+  # 触发原因通常是 start/end 窗口没命中任何块，或窗口内全在当前时间之后
+  # ------------------------------------------------------------
+  if not truncated_act_dur:
+    if main_act_dur:
+      truncated_act_dur = [main_act_dur[0][:]]  # 用窗口第一条兜底（最保守）
+    else:
+      # 窗口里啥都没有，只能用一个最小兜底，避免直接崩
+      truncated_act_dur = [[f"{inserted_act}", 0]]
 
-  if "(" in truncated_act_dur[-1][0]: 
+  # ------------------------------------------------------------
+  # [MOD] 更稳的字符串处理：只有符合 "(...)" 格式才拼 on the way to
+  # 原逻辑盲 split 会在没有 "(" 时出问题
+  # ------------------------------------------------------------
+  last = truncated_act_dur[-1][0]
+  if "(" in last and last.endswith(")"):
+    x = last.split("(")[0].strip() + " (on the way to " + last.split("(")[-1][:-1] + ")"
+    truncated_act_dur[-1][0] = x
+  else:
+    truncated_act_dur[-1][0] = last.strip()
+
+  if "(" in truncated_act_dur[-1][0]:
     inserted_act = truncated_act_dur[-1][0].split("(")[0].strip() + " (" + inserted_act + ")"
 
-  # To do inserted_act_dur+1 below is an important decision but I'm not sure
-  # if I understand the full extent of its implications. Might want to 
-  # revisit. 
   truncated_act_dur += [[inserted_act, inserted_act_dur]]
-  start_time_hour = (datetime.datetime(2022, 10, 31, 0, 0) 
+
+  start_time_hour = (datetime.datetime(2022, 10, 31, 0, 0)
                    + datetime.timedelta(hours=start_hour))
-  end_time_hour = (datetime.datetime(2022, 10, 31, 0, 0) 
+  end_time_hour = (datetime.datetime(2022, 10, 31, 0, 0)
                    + datetime.timedelta(hours=end_hour))
 
-  if debug: print ("GNS FUNCTION: <generate_new_decomp_schedule>")
-  return run_gpt_prompt_new_decomp_schedule(persona, 
-                                            main_act_dur, 
-                                            truncated_act_dur, 
-                                            start_time_hour,
-                                            end_time_hour,
-                                            inserted_act,
-                                            inserted_act_dur)[0]
+  if debug: print("GNS FUNCTION: <generate_new_decomp_schedule>")
+
+  # [MOD] return 完全保持你原来的行为：仍然交给 run_gpt_prompt_new_decomp_schedule
+  return run_gpt_prompt_new_decomp_schedule(
+      persona,
+      main_act_dur,
+      truncated_act_dur,
+      start_time_hour,
+      end_time_hour,
+      inserted_act,
+      inserted_act_dur
+  )[0]
+
+
+
 
 
 ##############################################################################
@@ -840,45 +1091,131 @@ def _should_react(persona, retrieved, personas):
   return False
 
 
+# def _create_react(persona, inserted_act, inserted_act_dur,
+#                   act_address, act_event, chatting_with, chat, chatting_with_buffer,
+#                   chatting_end_time, 
+#                   act_pronunciatio, act_obj_description, act_obj_pronunciatio, 
+#                   act_obj_event, act_start_time=None): 
+#   p = persona 
+
+#   min_sum = 0
+#   for i in range (p.scratch.get_f_daily_schedule_hourly_org_index()): 
+#     min_sum += p.scratch.f_daily_schedule_hourly_org[i][1]
+#   start_hour = int (min_sum/60)
+
+#   if (p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1] >= 120):
+#     end_hour = start_hour + p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1]/60
+
+#   elif (p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1] + 
+#       p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()+1][1]): 
+#     end_hour = start_hour + ((p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1] + 
+#               p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()+1][1])/60)
+
+#   else: 
+#     end_hour = start_hour + 2
+#   end_hour = int(end_hour)
+
+#   dur_sum = 0
+#   count = 0 
+#   start_index = None
+#   end_index = None
+#   for act, dur in p.scratch.f_daily_schedule: 
+#     if dur_sum >= start_hour * 60 and start_index == None:
+#       start_index = count
+#     if dur_sum >= end_hour * 60 and end_index == None: 
+#       end_index = count
+#     dur_sum += dur
+#     count += 1
+
+#   ret = generate_new_decomp_schedule(p, inserted_act, inserted_act_dur, 
+#                                        start_hour, end_hour)
+#   p.scratch.f_daily_schedule[start_index:end_index] = ret
+#   p.scratch.add_new_action(act_address,
+#                            inserted_act_dur,
+#                            inserted_act,
+#                            act_pronunciatio,
+#                            act_event,
+#                            chatting_with,
+#                            chat,
+#                            chatting_with_buffer,
+#                            chatting_end_time,
+#                            act_obj_description,
+#                            act_obj_pronunciatio,
+#                            act_obj_event,
+#                            act_start_time)
+
+
 def _create_react(persona, inserted_act, inserted_act_dur,
                   act_address, act_event, chatting_with, chat, chatting_with_buffer,
-                  chatting_end_time, 
-                  act_pronunciatio, act_obj_description, act_obj_pronunciatio, 
-                  act_obj_event, act_start_time=None): 
-  p = persona 
+                  chatting_end_time,
+                  act_pronunciatio, act_obj_description, act_obj_pronunciatio,
+                  act_obj_event, act_start_time=None):
+  p = persona
 
+  # ----------------------------------------
+  # start_hour: 保持你原来的计算方式
+  # ----------------------------------------
   min_sum = 0
-  for i in range (p.scratch.get_f_daily_schedule_hourly_org_index()): 
+  idx = p.scratch.get_f_daily_schedule_hourly_org_index()  # [MOD] 复用 idx，避免重复调用
+  for i in range(idx):
     min_sum += p.scratch.f_daily_schedule_hourly_org[i][1]
-  start_hour = int (min_sum/60)
+  start_hour = int(min_sum / 60)
 
-  if (p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1] >= 120):
-    end_hour = start_hour + p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1]/60
+  # ----------------------------------------
+  # [MOD] end_hour: 修复恒真 elif + idx+1 越界
+  # 逻辑保持原意：
+  #   - 若当前块 >= 120 分钟，用当前块
+  #   - 否则若存在下一块，用 dur0+dur1
+  #   - 否则兜底 2 小时
+  # ----------------------------------------
+  hourly_org = p.scratch.f_daily_schedule_hourly_org
+  if idx < len(hourly_org):
+    dur0 = hourly_org[idx][1]
+  else:
+    dur0 = 120  # idx 异常时兜底
 
-  elif (p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1] + 
-      p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()+1][1]): 
-    end_hour = start_hour + ((p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()][1] + 
-              p.scratch.f_daily_schedule_hourly_org[p.scratch.get_f_daily_schedule_hourly_org_index()+1][1])/60)
+  if dur0 >= 120:
+    end_hour = start_hour + dur0 / 60
+  else:
+    if idx + 1 < len(hourly_org):
+      dur1 = hourly_org[idx + 1][1]
+      end_hour = start_hour + (dur0 + dur1) / 60
+    else:
+      end_hour = start_hour + 2
 
-  else: 
-    end_hour = start_hour + 2
   end_hour = int(end_hour)
 
+  # ----------------------------------------
+  # 找到在 f_daily_schedule 中对应 start/end 的切片范围
+  # ----------------------------------------
   dur_sum = 0
-  count = 0 
+  count = 0
   start_index = None
   end_index = None
-  for act, dur in p.scratch.f_daily_schedule: 
-    if dur_sum >= start_hour * 60 and start_index == None:
+  for act, dur in p.scratch.f_daily_schedule:
+    if dur_sum >= start_hour * 60 and start_index is None:
       start_index = count
-    if dur_sum >= end_hour * 60 and end_index == None: 
+    if dur_sum >= end_hour * 60 and end_index is None:
       end_index = count
     dur_sum += dur
     count += 1
 
-  ret = generate_new_decomp_schedule(p, inserted_act, inserted_act_dur, 
-                                       start_hour, end_hour)
+  # ----------------------------------------
+  # [MOD] 兜底：防止 None 导致切片语义异常（例如 None:None 变成全替换）
+  # ----------------------------------------
+  if start_index is None:
+    start_index = 0
+  if end_index is None:
+    end_index = len(p.scratch.f_daily_schedule)
+
+  # 生成新的分解计划（保持你原链路）
+  ret = generate_new_decomp_schedule(p, inserted_act, inserted_act_dur,
+                                     start_hour, end_hour)
+
+  # 替换窗口内的计划片段
   p.scratch.f_daily_schedule[start_index:end_index] = ret
+
+  # 写回 action 记录（保持你原逻辑）
   p.scratch.add_new_action(act_address,
                            inserted_act_dur,
                            inserted_act,
@@ -892,6 +1229,8 @@ def _create_react(persona, inserted_act, inserted_act_dur,
                            act_obj_pronunciatio,
                            act_obj_event,
                            act_start_time)
+
+
 
 
 def _chat_react(maze, persona, focused_event, reaction_mode, personas):

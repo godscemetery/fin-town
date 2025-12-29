@@ -12,6 +12,20 @@ from global_methods import *
 from path_finder import *
 from utils import *
 
+# === 新闻行为钩子：在执行阶段触发读新闻并写入记忆 ===
+try:
+  # 标准包导入（推荐）
+  from persona.news.news_action import run_read_news_action
+except Exception:
+  # 兜底导入（避免某些运行方式下包路径不一致）
+  run_read_news_action = None
+
+# === 交易行为钩子：在执行阶段触发交易决策/下单并写入记忆 ===
+try:
+  from persona.trade.trade_action import run_trade_action
+except Exception:
+  run_trade_action = None
+
 
 def clean_plan_address(plan: str):
     """
@@ -60,6 +74,117 @@ def execute(persona, maze, personas, plan):
   OUTPUT: 
     execution
   """
+
+  # =========================================================
+  # [新增] 新闻读取钩子：当当前动作描述包含 news 时，读一条新闻写入 a_mem
+  # - 用 scratch._news_action_last_sig 去重，避免同一动作持续期间重复触发
+  # - 永不影响主流程：任何异常仅打印 warning
+  # =========================================================
+  try:
+    scratch = persona.scratch
+
+    act_desc = getattr(scratch, "act_description", "") or ""
+    if not act_desc:
+      act_desc = getattr(scratch, "act", "") or ""
+    if not act_desc:
+      act_desc = getattr(scratch, "curr_action", "") or ""
+
+    act_desc_l = act_desc.lower() if isinstance(act_desc, str) else ""
+
+    # ✅ 关键：只在“动作刚开始”触发一次（act_path_set 还没置 True）
+    is_new_action_tick = (getattr(scratch, "act_path_set", False) is False)
+
+    if is_new_action_tick and (("news" in act_desc_l) or ("newspaper" in act_desc_l)):
+      # 用 act_desc + act_address 做动作级去重（不再用 curr_time 做粒度）
+      act_addr = getattr(scratch, "act_address", "") or ""
+      sig = (act_desc_l, act_addr)
+
+      last_sig = getattr(scratch, "_news_action_last_sig", None)
+      if last_sig != sig:
+        curr_time = getattr(scratch, "curr_time", None)
+        if run_read_news_action is not None:
+          res = run_read_news_action(persona, now=curr_time)
+          scratch._news_action_last_sig = sig
+          scratch._news_action_last_result = res
+        else:
+          print("WARNING: run_read_news_action not available; skip news action.")
+  except Exception as e:
+    print("WARNING: news action hook error:", e)
+
+  # =========================================================
+  # [新增] 交易钩子：当当前动作描述包含 trade/market 等时，触发交易模块
+  # - 用 scratch.trade_trigger_cache 去重（按天清空）
+  # - 永不影响主流程：任何异常仅打印 warning
+  # =========================================================
+  try:
+    scratch = persona.scratch
+
+    act_desc = getattr(scratch, "act_description", "") or ""
+    if not act_desc:
+      act_desc = getattr(scratch, "act", "") or ""
+    if not act_desc:
+      act_desc = getattr(scratch, "curr_action", "") or ""
+
+    act_desc_l = act_desc.lower() if isinstance(act_desc, str) else ""
+
+    hit_trade = (
+      ("trade" in act_desc_l) or ("trading" in act_desc_l) or
+      ("market" in act_desc_l) or ("portfolio" in act_desc_l) or
+      ("buy" in act_desc_l) or ("sell" in act_desc_l)
+    )
+
+    if hit_trade and (run_trade_action is not None):
+      curr_time = getattr(scratch, "curr_time", None)
+
+      # ---------------------------------------------------------
+      # [MOD] 去重：不要用 curr_time 做 sig（会导致每分钟都触发）
+      # 尽量用稳定字段：动作描述 + 动作地点/事件（拿不到就退化）
+      # ---------------------------------------------------------
+      act_address = getattr(scratch, "act_address", None) or getattr(scratch, "curr_tile", None) or ""
+      act_event = getattr(scratch, "act_event", None) or ""
+
+      # 一个稳定签名：同一段“看盘/交易”动作不会因为时间跳动而重复触发
+      sig = (act_desc_l, str(act_address), str(act_event))
+
+      # ---------------------------------------------------------
+      # [MOD] 按天清空 cache，避免无限增长
+      # ---------------------------------------------------------
+      day_key = ""
+      if curr_time is not None:
+        try:
+          day_key = curr_time.date().isoformat()
+        except Exception:
+          day_key = str(curr_time)[:10]
+
+      last_day = getattr(scratch, "_trade_trigger_cache_day", None)
+      if last_day != day_key:
+        scratch._trade_trigger_cache_day = day_key
+        scratch._trade_trigger_cache = set()
+
+      cache = getattr(scratch, "_trade_trigger_cache", None)
+      if cache is None:
+        cache = set()
+        scratch._trade_trigger_cache = cache
+
+      if sig not in cache:
+        # 你可以把 symbol 放到 scratch 里（比如 scratch.trade_symbol），这里先给默认
+        symbol = getattr(scratch, "trade_symbol", None) or "BTC/USDT"
+
+        # dry_run 建议也放 scratch 配置，先默认 True
+        dry_run = getattr(scratch, "trade_dry_run", True)
+
+        res = run_trade_action(persona, symbol=symbol, now=curr_time, dry_run=dry_run)
+
+        cache.add(sig)
+        scratch._trade_action_last_sig = sig          # 保留：便于你 debug
+        scratch._trade_action_last_result = res
+
+  except Exception as e:
+    print("WARNING: trade hook failed:", e)
+
+
+  # =========================================================
+
   if "<random>" in plan and persona.scratch.planned_path == []: 
     persona.scratch.act_path_set = False
 

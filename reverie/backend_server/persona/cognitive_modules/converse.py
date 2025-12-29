@@ -113,6 +113,15 @@ def generate_one_utterance(maze, init_persona, target_persona, retrieved, curr_c
   curr_context += (f"{init_persona.scratch.name} " +
               f"is initiating a conversation with " +
               f"{target_persona.scratch.name}.")
+  fin_rules = """
+    [FIN-TOWN DIALOGUE RULES]
+    - Talk only about finance/investing: market news, macro policy, rates/inflation, sectors, company fundamentals, valuation, risk, portfolio positioning, trading decisions, investor sentiment.
+    - Stay in character based on your professional role (fund manager / sell-side analyst / retail investor).
+    - Avoid daily-life topics (food, romance, leisure, chores). If they appear, acknowledge briefly and redirect to finance immediately.
+    - Prefer concrete points: catalysts, risks, and what to do (buy/sell/hold/watch).
+    - Do NOT mention you are an AI or this is a simulation.
+    """
+  curr_context += "\n" + fin_rules
 
   print ("July 23 5")
   x = run_gpt_generate_iterative_chat_utt(maze, init_persona, target_persona, retrieved, curr_context, curr_chat)[0]

@@ -9,6 +9,9 @@ import re
 import datetime
 import sys
 import ast
+import traceback
+import random
+import difflib
 
 sys.path.append('../../')
 
@@ -158,48 +161,57 @@ def run_gpt_prompt_daily_plan(persona,
   return output, [output, prompt, gpt_param, prompt_input, fail_safe]
 
 
-def run_gpt_prompt_generate_hourly_schedule(persona, 
+
+
+def run_gpt_prompt_generate_hourly_schedule(persona,
                                             curr_hour_str,
-                                            p_f_ds_hourly_org, 
+                                            p_f_ds_hourly_org,
                                             hour_str,
                                             intermission2=None,
-                                            test_input=None, 
-                                            verbose=False): 
-  def create_prompt_input(persona, 
-                          curr_hour_str, 
+                                            test_input=None,
+                                            verbose=False):
+
+  def create_prompt_input(persona,
+                          curr_hour_str,
                           p_f_ds_hourly_org,
                           hour_str,
                           intermission2=None,
-                          test_input=None): 
-    if test_input: return test_input
+                          test_input=None):
+    if test_input:
+      return test_input
+
+    # 1) schedule format block
     schedule_format = ""
-    for i in hour_str: 
+    for i in hour_str:
       schedule_format += f"[{persona.scratch.get_str_curr_date_str()} -- {i}]"
       schedule_format += f" Activity: [Fill in]\n"
     schedule_format = schedule_format[:-1]
 
+    # 2) intended breakdown block
     intermission_str = f"Here the originally intended hourly breakdown of"
     intermission_str += f" {persona.scratch.get_str_firstname()}'s schedule today: "
-    for count, i in enumerate(persona.scratch.daily_req): 
+    for count, i in enumerate(persona.scratch.daily_req):
       intermission_str += f"{str(count+1)}) {i}, "
     intermission_str = intermission_str[:-2]
 
+    # 3) prior schedule block (already generated hours)
     prior_schedule = ""
-    if p_f_ds_hourly_org: 
+    if p_f_ds_hourly_org:
       prior_schedule = "\n"
-      for count, i in enumerate(p_f_ds_hourly_org): 
-        prior_schedule += f"[(ID:{get_random_alphanumeric()})" 
+      for count, i in enumerate(p_f_ds_hourly_org):
+        prior_schedule += f"[(ID:{get_random_alphanumeric()})"
         prior_schedule += f" {persona.scratch.get_str_curr_date_str()} --"
         prior_schedule += f" {hour_str[count]}] Activity:"
         prior_schedule += f" {persona.scratch.get_str_firstname()}"
         prior_schedule += f" is {i}\n"
 
+    # 4) ending to be completed
     prompt_ending = f"[(ID:{get_random_alphanumeric()})"
     prompt_ending += f" {persona.scratch.get_str_curr_date_str()}"
     prompt_ending += f" -- {curr_hour_str}] Activity:"
     prompt_ending += f" {persona.scratch.get_str_firstname()} is"
 
-    if intermission2: 
+    if intermission2:
       intermission2 = f"\n{intermission2}"
 
     prompt_input = []
@@ -208,116 +220,133 @@ def run_gpt_prompt_generate_hourly_schedule(persona,
 
     prompt_input += [prior_schedule + "\n"]
     prompt_input += [intermission_str]
-    if intermission2: 
+    if intermission2:
       prompt_input += [intermission2]
-    else: 
+    else:
       prompt_input += [""]
     prompt_input += [prompt_ending]
 
     return prompt_input
 
+
+  # ---------------------------
+  # Robust clean & validate
+  # ---------------------------
   def __func_clean_up(gpt_response, prompt=""):
+    """
+    从模型输出里尽量抽取“活动短语”。
+    允许模型复述模板/ID/Activity:，我们把这些剥离掉。
+    返回空字符串表示无法抽取。
+    """
     if not gpt_response:
-        return "asleep"
+      return ""
 
     cr = gpt_response.strip()
 
-    # 只取第一行
+    # 只取第一行（逐小时生成时足够；并与 stop=["\n"] 匹配）
     cr = cr.split("\n")[0].strip()
-
     if not cr:
-        return "asleep"
+      return ""
 
-    # 去掉末尾句号
-    if cr.endswith("."):
-        cr = cr[:-1]
+    # 如果包含 "Activity:"，取其后
+    if "Activity:" in cr:
+      cr = cr.split("Activity:", 1)[1].strip()
+
+    # 去掉所有方括号内容（如 [Monday ...]）
+    cr = re.sub(r"\[.*?\]", "", cr).strip()
+
+    # 去掉 ID:xxxx 残留
+    cr = re.sub(r"ID:\w+", "", cr).strip()
+
+    # 去掉名字前缀（Isabella is ... / Isabella ...）
+    firstname = persona.scratch.get_str_firstname()
+    cr = re.sub(rf"^{re.escape(firstname)}\s+is\s+", "", cr, flags=re.IGNORECASE).strip()
+    cr = re.sub(rf"^{re.escape(firstname)}\s+", "", cr, flags=re.IGNORECASE).strip()
+
+    # 去掉开头的 "is "
+    cr = re.sub(r"^is\s+", "", cr, flags=re.IGNORECASE).strip()
+
+    # 去掉末尾标点
+    cr = cr.rstrip(".。!！?？").strip()
+
+    # 防止输出仍然像模板
+    lower = cr.lower()
+    if "fill in" in lower or "[fill in]" in lower:
+      return ""
 
     # 限制最大长度
     if len(cr) > 80:
-        cr = cr[:80]
+      cr = cr[:80].rstrip()
 
     return cr
 
 
   def __func_validate(gpt_response, prompt=""):
-    if not gpt_response:
-        return False
-
-    cr = gpt_response.strip()
-    if not cr:
-        return False
-
-    line1 = cr.split("\n")[0].strip()
-    if not line1:
-        return False
-
-    # 不允许 prompt 的结构泄露到结果
-    banned = ["Activity:", "[", "]", "ID:"]
-    if any(b in line1 for b in banned):
-        return False
-
-    return True
+    """
+    核心：只要 clean_up 后能抽取到非空短语，就认为有效。
+    """
+    cleaned = __func_clean_up(gpt_response, prompt)
+    return bool(cleaned)
 
 
-  def get_fail_safe(): 
-    fs = "asleep"
-    return fs
-
-  # # ChatGPT Plugin ===========================================================
-  # def __chat_func_clean_up(gpt_response, prompt=""): ############
-  #   cr = gpt_response.strip()
-  #   if cr[-1] == ".":
-  #     cr = cr[:-1]
-  #   return cr
-
-  # def __chat_func_validate(gpt_response, prompt=""): ############
-  #   try: __func_clean_up(gpt_response, prompt="")
-  #   except: return False
-  #   return True
-
-  # print ("asdhfapsh8p9hfaiafdsi;ldfj as DEBUG 10") ########
-  # gpt_param = {"engine": "text-davinci-002", "max_tokens": 15, 
-  #              "temperature": 0, "top_p": 1, "stream": False,
-  #              "frequency_penalty": 0, "presence_penalty": 0, "stop": None}
-  # prompt_template = "persona/prompt_template/v3_ChatGPT/generate_hourly_schedule_v2.txt" ########
-  # prompt_input = create_prompt_input(persona, 
-  #                                    curr_hour_str, 
-  #                                    p_f_ds_hourly_org,
-  #                                    hour_str, 
-  #                                    intermission2,
-  #                                    test_input)  ########
-  # prompt = generate_prompt(prompt_input, prompt_template)
-  # example_output = "studying for her music classes" ########
-  # special_instruction = "The output should ONLY include the part of the sentence that completes the last line in the schedule above." ########
-  # fail_safe = get_fail_safe() ########
-  # output = ChatGPT_safe_generate_response(prompt, example_output, special_instruction, 3, fail_safe,
-  #                                         __chat_func_validate, __chat_func_clean_up, True)
-  # if output != False: 
-  #   return output, [output, prompt, gpt_param, prompt_input, fail_safe]
-  # # ChatGPT Plugin ===========================================================
+  def get_fail_safe():
+    # 保留原逻辑：失败回退 asleep
+    return "asleep"
 
 
-  gpt_param = {"model": "qwen3-max", "max_tokens": 50, 
-               "temperature": 0.5, "top_p": 1, "stream": False,
-               "frequency_penalty": 0, "presence_penalty": 0, "stop": ["\n"]}
+  # ---------------------------
+  # Model params
+  # ---------------------------
+  # 建议：逐小时生成时 max_tokens 用 20-50 都行；temperature 低点更稳
+  gpt_param = {
+      "model": "qwen3-max",
+      "max_tokens": 50,
+      "temperature": 0.2,   # 比 0.5 稳定一些，减少复述模板
+      "top_p": 1,
+      "stream": False,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "stop": ["\n"]        # 逐小时输出：只要一行
+  }
+
   prompt_template = "persona/prompt_template/v2/generate_hourly_schedule_v2.txt"
-  prompt_input = create_prompt_input(persona, 
-                                     curr_hour_str, 
-                                     p_f_ds_hourly_org,
-                                     hour_str, 
-                                     intermission2,
-                                     test_input)
+
+  prompt_input = create_prompt_input(
+      persona,
+      curr_hour_str,
+      p_f_ds_hourly_org,
+      hour_str,
+      intermission2,
+      test_input
+  )
+
   prompt = generate_prompt(prompt_input, prompt_template)
+
   fail_safe = get_fail_safe()
-  
-  output = safe_generate_response(prompt, gpt_param, 5, fail_safe,
-                                   __func_validate, __func_clean_up)
-  
-  if debug or verbose: 
-    print_run_prompts(prompt_template, persona, gpt_param, 
+
+  # 注意：safe_generate_response 内部如果会把 “cleaned” 再走一遍 clean_up/validate，
+  # 这里的 clean_up/validate 设计成“可抽取即可通过”，就能显著减少回退 asleep 的概率。
+  output_raw = safe_generate_response(
+      prompt,
+      gpt_param,
+      5,            # retries
+      fail_safe,
+      __func_validate,
+      __func_clean_up
+  )
+
+  # safe_generate_response 可能返回的已经是 clean_up 后的结果，也可能是 raw；
+  # 我们保险再 clean 一次（不会伤害）
+  output = __func_clean_up(output_raw, prompt)
+  if not output:
+    output = fail_safe
+
+  if debug or verbose:
+    print_run_prompts(prompt_template, persona, gpt_param,
                       prompt_input, prompt, output)
-    
+
   return output, [output, prompt, gpt_param, prompt_input, fail_safe]
+
 
 
 
@@ -703,106 +732,179 @@ def run_gpt_prompt_action_sector(action_description,
 
 
 
-def run_gpt_prompt_action_arena(action_description, 
-                                persona, 
+def run_gpt_prompt_action_arena(action_description,
+                                persona,
                                 maze, act_world, act_sector,
-                                test_input=None, 
+                                test_input=None,
                                 verbose=False):
-  def create_prompt_input(action_description, persona, maze, act_world, act_sector, test_input=None): 
+
+  def _strip_think(s: str) -> str:
+    if not isinstance(s, str):
+      return ""
+    # 去掉 Qwen / 通用 think 标签
+    s = re.sub(r"<think>.*?</think>", "", s, flags=re.S)
+    return s.strip()
+
+  def _normalize(s: str) -> str:
+    s = _strip_think(s)
+    # 只取第一行，避免解释
+    s = s.split("\n")[0].strip()
+    # 去掉可能的 JSON 包装
+    s = s.strip().strip("{}").strip()
+    # 去掉引号
+    s = s.replace('"', "").replace("'", "").strip()
+    # 如果像 "output: kitchen" 取冒号后
+    if ":" in s:
+      s = s.split(":", 1)[1].strip()
+    # 去掉末尾句号
+    if s.endswith("."):
+      s = s[:-1].strip()
+    return s
+
+  def create_prompt_input(action_description, persona, maze, act_world, act_sector, test_input=None):
+    if test_input:
+      return test_input
+
     prompt_input = []
     prompt_input += [persona.scratch.get_str_name()]
-    x = f"{act_world}:{act_sector}"
+
+    # ✅ 恢复原版：当前所在 arena / sector（非常关键）
+    prompt_input += [maze.access_tile(persona.scratch.curr_tile).get("arena", "")]
+    prompt_input += [maze.access_tile(persona.scratch.curr_tile).get("sector", "")]
+
+    prompt_input += [persona.scratch.get_str_name()]
+
+    y = f"{act_world}:{act_sector}"
     prompt_input += [act_sector]
 
-    # MAR 11 TEMP
-    accessible_arena_str = persona.s_mem.get_str_accessible_sector_arenas(x)
-    curr = accessible_arena_str.split(", ")
-    fin_accessible_arenas = []
-    for i in curr: 
-      if "'s room" in i: 
-        if persona.scratch.last_name in i: 
-          fin_accessible_arenas += [i]
-      else: 
-        fin_accessible_arenas += [i]
-    accessible_arena_str = ", ".join(fin_accessible_arenas)
-    # END MAR 11 TEMP
+    accessible_arena_str = persona.s_mem.get_str_accessible_sector_arenas(y) or ""
+    # 可选：做轻度清洗（不改变内容语义）
+    accessible_arena_str = accessible_arena_str.replace("\n", " ").strip()
 
     prompt_input += [accessible_arena_str]
 
     action_description_1 = action_description
     action_description_2 = action_description
-    if "(" in action_description: 
+    if "(" in action_description:
       action_description_1 = action_description.split("(")[0].strip()
       action_description_2 = action_description.split("(")[-1][:-1]
+
     prompt_input += [persona.scratch.get_str_name()]
     prompt_input += [action_description_1]
-
     prompt_input += [action_description_2]
     prompt_input += [persona.scratch.get_str_name()]
     prompt_input += [act_sector]
-    prompt_input += [accessible_arena_str]
 
     return prompt_input
 
   def __func_clean_up(gpt_response, prompt=""):
-    # 先取第一行，避免后面多解释
-    line = gpt_response.strip().split("\n")[0]
-
-    # 如果像 {"output": "kitchen"} 这种，先截到第一个 }
-    if "}" in line:
-        line = line.split("}")[0]
-
-    # 去掉左右大括号和引号
-    line = line.replace("{", "").replace("}", "").strip()
-    line = line.replace('"', "").replace("'", "").strip()
-
-    # 如果还包含 "output:" 之类，就只取冒号后面
-    if ":" in line:
-        line = line.split(":", 1)[1].strip()
-
-    # 最后只保留第一个单词，防止出现 "kitchen (chosen)" 之类
-    return line.split()[0]
-
+    return _normalize(gpt_response)
 
   def __func_validate(gpt_response, prompt=""):
-    if not isinstance(gpt_response, str):
-        return False
-    if len(gpt_response.strip()) == 0:
-        return False
-    return True
+    s = _normalize(gpt_response)
+    return len(s) > 0
 
-  
-  def get_fail_safe(): 
+  def get_fail_safe():
     return "kitchen"
 
   gpt_param = {
       "model": "qwen3-max",
-      "max_tokens": 15,
+      "max_tokens": 30,         # 稍微给一点，避免被截断
       "temperature": 0,
       "top_p": 1,
       "stream": False,
       "frequency_penalty": 0,
       "presence_penalty": 0,
-      "stop": None,
+      "stop": ["\n"],           # ✅ 直接截断到第一行
   }
 
+  # ✅ 建议先用原版模板（除非你真的改过模板变量顺序）
   prompt_template = "persona/prompt_template/v1/action_location_object_vMar11.txt"
-  prompt_input = create_prompt_input(action_description, persona, maze, act_world, act_sector)
+
+  prompt_input = create_prompt_input(action_description, persona, maze, act_world, act_sector, test_input)
   prompt = generate_prompt(prompt_input, prompt_template)
 
   fail_safe = get_fail_safe()
-  output = safe_generate_response(
-      prompt, gpt_param, 5, fail_safe,
-      __func_validate, __func_clean_up
-  )
+  output = safe_generate_response(prompt, gpt_param, 5, fail_safe,
+                                  __func_validate, __func_clean_up)
 
-  if debug or verbose: 
-    print_run_prompts(prompt_template, persona, gpt_param, 
+  # ✅ 最关键：强制 output ∈ 候选 arenas
+  y = f"{act_world}:{act_sector}"
+  candidates = [i.strip() for i in (persona.s_mem.get_str_accessible_sector_arenas(y) or "").split(",") if i.strip()]
+
+  if candidates:
+    if output not in candidates:
+      # 先做相似度匹配（比随机更稳）
+      best = difflib.get_close_matches(output, candidates, n=1, cutoff=0.0)
+      output = best[0] if best else random.choice(candidates)
+  else:
+    # 没候选就只能 fail_safe
+    output = fail_safe
+
+  if debug or verbose:
+    print_run_prompts(prompt_template, persona, gpt_param,
                       prompt_input, prompt, output)
 
   return output, [output, prompt, gpt_param, prompt_input, fail_safe]
 
 
+
+
+def run_gpt_prompt_action_game_object(action_description, 
+                                      persona, 
+                                      maze,
+                                      temp_address,
+                                      test_input=None, 
+                                      verbose=False): 
+  def create_prompt_input(action_description, 
+                          persona, 
+                          temp_address, 
+                          test_input=None): 
+    prompt_input = []
+    if "(" in action_description: 
+      action_description = action_description.split("(")[-1][:-1]
+      
+    prompt_input += [action_description]
+    prompt_input += [persona
+                     .s_mem.get_str_accessible_arena_game_objects(temp_address)]
+    return prompt_input
+  
+  def __func_validate(gpt_response, prompt=""): 
+    if len(gpt_response.strip()) < 1: 
+      return False
+    return True
+
+  def __func_clean_up(gpt_response, prompt=""):
+    cleaned_response = gpt_response.strip()
+    return cleaned_response
+
+  def get_fail_safe(): 
+    fs = ("bed")
+    return fs
+
+  gpt_param = {"engine": "text-davinci-003", "max_tokens": 15, 
+               "temperature": 0, "top_p": 1, "stream": False,
+               "frequency_penalty": 0, "presence_penalty": 0, "stop": None}
+  prompt_template = "persona/prompt_template/v1/action_object_v2.txt"
+  prompt_input = create_prompt_input(action_description, 
+                                     persona, 
+                                     temp_address, 
+                                     test_input)
+  prompt = generate_prompt(prompt_input, prompt_template)
+
+  fail_safe = get_fail_safe()
+  output = safe_generate_response(prompt, gpt_param, 5, fail_safe,
+                                   __func_validate, __func_clean_up)
+
+  x = [i.strip() for i in persona.s_mem.get_str_accessible_arena_game_objects(temp_address).split(",")]
+  if output not in x: 
+    output = random.choice(x)
+
+  if debug or verbose: 
+    print_run_prompts(prompt_template, persona, gpt_param, 
+                      prompt_input, prompt, output)
+  
+  return output, [output, prompt, gpt_param, prompt_input, fail_safe]
 
 
 def run_gpt_prompt_pronunciatio(act_desp, persona, verbose=False):
@@ -971,17 +1073,56 @@ def run_gpt_prompt_event_triple(action_description, persona, verbose=False):
 
 
 def run_gpt_prompt_act_obj_desc(act_game_object, act_desp, persona, verbose=False): 
-    """
-    临时 stub 版本：不调用大模型，直接返回一个固定描述，
-    目的是验证整个计划/执行流程不会再在这里崩。
-    """
-    output = f"{act_game_object} is idle"
-    debug_info = {
-        "act_game_object": act_game_object,
-        "act_desp": act_desp,
-        "persona_name": getattr(persona, "name", None),
-    }
-    return output, debug_info
+
+  if isinstance(act_game_object, str) and "<random>" in act_game_object:
+    print("[DEBUG] persona:", getattr(persona, "name", None))
+    try:
+      print("[DEBUG] curr_time:", persona.scratch.curr_time)
+    except Exception:
+      pass
+
+    print("[DEBUG] act_game_object is <random> BEFORE act_obj_desc:", repr(act_game_object))
+    traceback.print_stack(limit=12)     
+
+  def create_prompt_input(act_game_object, act_desp, persona): 
+    prompt_input = [act_game_object, 
+                    persona.name,
+                    act_desp,
+                    act_game_object,
+                    act_game_object]
+    return prompt_input
+  
+  def __func_clean_up(gpt_response, prompt=""):
+    cr = gpt_response.strip()
+    if cr[-1] == ".": cr = cr[:-1]
+    return cr
+
+  def __func_validate(gpt_response, prompt=""): 
+    try: 
+      gpt_response = __func_clean_up(gpt_response, prompt="")
+    except: 
+      return False
+    return True 
+
+  def get_fail_safe(act_game_object): 
+    fs = f"{act_game_object} is idle"
+    return fs
+
+  gpt_param = {"model": "qwen3-max", "max_tokens": 30, 
+               "temperature": 0, "top_p": 1, "stream": False,
+               "frequency_penalty": 0, "presence_penalty": 0, "stop": ["\n"]}
+  prompt_template = "persona/prompt_template/v2/generate_obj_event_v1.txt"
+  prompt_input = create_prompt_input(act_game_object, act_desp, persona)
+  prompt = generate_prompt(prompt_input, prompt_template)
+  fail_safe = get_fail_safe(act_game_object)
+  output = safe_generate_response(prompt, gpt_param, 5, fail_safe,
+                                   __func_validate, __func_clean_up)
+
+  if debug or verbose: 
+    print_run_prompts(prompt_template, persona, gpt_param, 
+                      prompt_input, prompt, output)
+  
+  return output, [output, prompt, gpt_param, prompt_input, fail_safe]
 
 
 
