@@ -54,6 +54,8 @@ def clean_plan_address(plan: str):
 
     return cleaned_key
 
+
+
 def execute(persona, maze, personas, plan): 
   """
   Given a plan (action's string address), we execute the plan (actually 
@@ -75,7 +77,8 @@ def execute(persona, maze, personas, plan):
     execution
   """
 
-  # =========================================================
+
+    # =========================================================
   # [新增] 新闻读取钩子：当当前动作描述包含 news 时，读一条新闻写入 a_mem
   # - 用 scratch._news_action_last_sig 去重，避免同一动作持续期间重复触发
   # - 永不影响主流程：任何异常仅打印 warning
@@ -185,6 +188,7 @@ def execute(persona, maze, personas, plan):
 
   # =========================================================
 
+  
   if "<random>" in plan and persona.scratch.planned_path == []: 
     persona.scratch.act_path_set = False
 
@@ -229,15 +233,16 @@ def execute(persona, maze, personas, plan):
       y = int(plan.split()[2])
       target_tiles = [[x, y]]
 
-    elif "<random>" in plan:
-      plan = clean_plan_address(plan)
+    elif "<random>" in plan: 
+      # Executing a random location action.
+      plan = ":".join(plan.split(":")[:-1])
       if plan in maze.address_tiles:
         target_tiles = maze.address_tiles[plan]
         target_tiles = random.sample(list(target_tiles), 1)
       else:
-          print("WARNING: unknown random address:", plan)
-          return None, "", ""
-
+        # Fallback: stay put if the random target address is missing.
+        print(f"[WARN] Missing random address in maze.address_tiles: {plan}")
+        target_tiles = [persona.scratch.curr_tile]
 
     else: 
       # This is our default execution. We simply take the persona to the
@@ -245,13 +250,12 @@ def execute(persona, maze, personas, plan):
       # Retrieve the target addresses. Again, plan is an action address in its
       # string form. <maze.address_tiles> takes this and returns candidate 
       # coordinates. 
-      cleaned_plan = clean_plan_address(plan)
-
-      if cleaned_plan in maze.address_tiles:
-        target_tiles = maze.address_tiles[cleaned_plan]
-      else:
-        print("WARNING: unknown plan address:", plan, "=> cleaned as", cleaned_plan)
-        return None, "", 
+      if plan in maze.address_tiles: 
+        target_tiles = maze.address_tiles[plan]
+      else: 
+        # Fallback: stay where you are to avoid hard crash on missing address.
+        print(f"[WARN] Missing address in maze.address_tiles: {plan}")
+        target_tiles = [persona.scratch.curr_tile]
 
     # There are sometimes more than one tile returned from this (e.g., a tabe
     # may stretch many coordinates). So, we sample a few here. And from that 
@@ -317,8 +321,6 @@ def execute(persona, maze, personas, plan):
 
   execution = ret, persona.scratch.act_pronunciatio, description
   return execution
-
-
 
 
 

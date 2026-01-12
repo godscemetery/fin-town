@@ -1,0 +1,34 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        73,
+        16
+      ],
+      "pronunciatio": "\ud83d\udcca\u2699\ufe0f",
+      "description": "[(ID:gVs0a8) Monday February 13 -- 09:00 AM] Activity: Isabella is reviewing overnight crypto market movements and preparing for her scheduled 09:30 portfolio review, ensuring her workspace in (calibrating her risk dashboard\u2014verifying stop-loss levels, position sizing rules, and exposure caps for the upcoming review) @ the Ville:Isabella Rodriguez's apartment:main room:desk",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        123,
+        50
+      ],
+      "pronunciatio": "\ud83d\udcf0\ud83d\udcf1",
+      "description": "[(ID:h3AcfD) Monday February 13 -- 09:00 AM] Activity: Maria is finishing her morning routine and preparing to read crypto news headlines as part of her 09:10\u201309 (opening her preferred crypto news sites (e.g., CoinDesk, The Block, Crypto Twitter feed) in preparation for the 09:10 news read) @ the Ville:Dorm for Oak Hill College:kitchen:cooking area",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        115,
+        37
+      ],
+      "pronunciatio": "\ud83d\udc02\ud83d\udc3b",
+      "description": "[(ID:fBRrQh) Monday February 13 -- 09:00 AM] Activity: Klaus is writing a short market brief at the Oak Hill Research Desk, synthesizing overnight macro developments and crypto news to assess potential catalyst (drafting bullet-point summaries of each catalyst, noting source, timing, and directional bias (bullish/bearish/neutral)) @ the Ville:Dorm for Oak Hill College:common room:common room sofa",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 09:43:40"
+  }
+}

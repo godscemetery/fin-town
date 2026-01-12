@@ -1,0 +1,34 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        73,
+        16
+      ],
+      "pronunciatio": "\ud83d\udcc1\ud83d\udd0d",
+      "description": "[(ID:IzqMGj) Monday February 13 -- 12:00 PM] Activity: Isabella is wrapping up her morning analysis work, organizing her notes, and preparing for her midday news check at 12 (organizing her digital notes into folders: \u201cCatalysts,\u201d \u201cRisk Flags,\u201d and \u201cWatchlist Triggers.\u201d) @ the Ville:Isabella Rodriguez's apartment:main room:desk",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        117,
+        47
+      ],
+      "pronunciatio": "\ud83e\uddd8\u200d\u2640",
+      "description": "[(ID:ScjJhU) Monday February 13 -- 12:00 PM] Activity: Maria is having lunch while keeping one eye on crypto market alerts, ready to respond if urgent news breaks, but otherwise sticking to (taking a mindful break from screens, focusing on her meal for a few minutes\u2014but keeps her phone within arm\u2019s reach) @ the Ville:Hobbs Cafe:cafe:cafe customer seating",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        109,
+        30
+      ],
+      "pronunciatio": "\ud83c\udf7d\ufe0f\ud83d\udd14",
+      "description": "[(ID:Blfn0k) Monday February 13 -- 12:00 PM] Activity: Klaus is eating lunch and simultaneously scanning news feeds for any breaking macro or crypto updates, as per his 12:00 (continuing to eat while monitoring real-time alerts from his crypto news aggregator) @ the Ville:Dorm for Oak Hill College:Klaus Mueller's room:desk",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 12:25:20"
+  }
+}

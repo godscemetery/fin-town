@@ -11,8 +11,6 @@ from operator import itemgetter
 from global_methods import *
 from persona.prompt_template.gpt_structure import *
 from persona.prompt_template.run_gpt_prompt import *
-import re
-
 
 def generate_poig_score(persona, event_type, description): 
   if "is idle" in description: 
@@ -23,7 +21,6 @@ def generate_poig_score(persona, event_type, description):
   elif event_type == "chat": 
     return run_gpt_prompt_chat_poignancy(persona, 
                            persona.scratch.act_description)[0]
-
 
 def perceive(persona, maze): 
   """

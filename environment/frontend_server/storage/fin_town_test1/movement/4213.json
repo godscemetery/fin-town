@@ -1,0 +1,34 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        73,
+        16
+      ],
+      "pronunciatio": "\ud83d\udcf0\u2696\ufe0f",
+      "description": "[(ID:Cq5T42) Monday February 13 -- 11:00 AM] Activity: Isabella is analyzing macroeconomic indicators and cross-referencing them with on-chain BTC data to assess potential market catalysts, (noting potential catalysts (e.g., ETF news, regulatory shifts, liquidity events) that could amplify macro-on-chain signals) @ the Ville:Isabella Rodriguez's apartment:main room:desk",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        127,
+        54
+      ],
+      "pronunciatio": "\ud83e\udde0\ud83d\udcc9",
+      "description": "[(ID:uVPCOq) Monday February 13 -- 11:00 AM] Activity: Maria is analyzing recent BTC/USDT price action after her 10:40 trade, monitoring for any sudden market (updating her mental risk assessment: stop-loss level, take-profit target, and max loss tolerance) @ the Ville:Dorm for Oak Hill College:Maria Lopez's room:computer",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        119,
+        24
+      ],
+      "pronunciatio": "\ud83d\udcdd\ud83d\udcc9",
+      "description": "[(ID:Pqmj64) Monday February 13 -- 11:00 AM] Activity: Klaus is reviewing his finalized market brief and cross-referencing recent macro data releases for accuracy, while monitoring real-time crypto news feeds (updating a footnote in the brief to reflect a minor revision in Eurozone industrial production data released this morning) @ the Ville:Oak Hill College:library:library table",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 11:42:10"
+  }
+}

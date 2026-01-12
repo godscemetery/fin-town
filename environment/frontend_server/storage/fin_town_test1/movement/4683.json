@@ -1,0 +1,34 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        74,
+        14
+      ],
+      "pronunciatio": "\ud83e\udd57\ud83c\udf57",
+      "description": "[(ID:FRE0XM) Monday February 13 -- 01:00 PM] Activity: Isabella is taking a light lunch break while listening to a crypto market podcast, maintaining awareness of sentiment without making impulsive decisions (1) Isabella is preparing a light, healthy lunch (e.g., salad with grilled chicken) in her kitchen) @ the Ville:Isabella Rodriguez's apartment:main room:refrigerator",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        123,
+        57
+      ],
+      "pronunciatio": "\ud83d\udcf1\ud83d\ude34",
+      "description": "[(ID:ScjJhU) Monday February 13 -- 12:00 PM] Activity: Maria is having lunch while keeping one eye on crypto market alerts, ready to respond if urgent news breaks, but otherwise sticking to (placing her phone in her pocket, confirming no urgent alerts came through, and mentally transitioning to her post-lunch nap) @ the Ville:Dorm for Oak Hill College:Maria Lopez's room:bed",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        128,
+        48
+      ],
+      "pronunciatio": "\ud83d\ude34\ud83d\udca4",
+      "description": "[(ID:Blfn0k) Monday February 13 -- 12:00 PM] Activity: Klaus is eating lunch and simultaneously scanning news feeds for any breaking macro or crypto updates, as per his 12:00 (closing non-essential tabs, minimizing distractions, and preparing to transition to his post-lunch nap) @ the Ville:Dorm for Oak Hill College:Klaus Mueller's room:bed",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 13:00:30"
+  }
+}

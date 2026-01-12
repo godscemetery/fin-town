@@ -1,0 +1,76 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        73,
+        16
+      ],
+      "pronunciatio": "\ud83d\udccb\ud83d\udcf0",
+      "description": "[(ID:IzqMGj) Monday February 13 -- 12:00 PM] Activity: Isabella is wrapping up her morning analysis work, organizing her notes, and preparing for her midday news check at 12 (reviewing her 12:30 news-check protocol checklist to ensure disciplined information intake) @ the Ville:Isabella Rodriguez's apartment:main room:desk",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        120,
+        45
+      ],
+      "pronunciatio": "\ud83d\udcac",
+      "description": "conversing about Maria Lopez and Klaus Mueller coordinating their crypto trading strategy, agreeing to wait for a clear catalyst\u2014such as concrete developments in stablecoin legislation or unusual on-chain activity\u2014before entering new BTC positions, with Maria checking news at 13:30 and Klaus cross-referencing data during his 14:30 market check. @ <persona> Klaus Mueller",
+      "chat": [
+        [
+          "Maria Lopez",
+          "Hey Klaus\u2014still seeing that sideways grind on BTC? I\u2019m sticking to the plan and not jumping in until we get a real breakout or some catalyst that actually moves crypto, not just equities."
+        ],
+        [
+          "Klaus Mueller",
+          "Hey Maria\u2014yeah, still stuck in that range. I just scanned the latest Fed commentary and crypto regulatory filings over lunch; nothing concrete yet. But I\u2019ll flag anything material immediately. Same on your end?"
+        ],
+        [
+          "Maria Lopez",
+          "Absolutely\u2014I\u2019ll keep you posted too. Just saw a headline about stablecoin legislation moving through committee, but it\u2019s vague so far. Not enough to trade on yet, but I\u2019ll dig deeper during my 13:30 news check."
+        ],
+        [
+          "Klaus Mueller",
+          "Got it\u2014thanks for the heads-up on the stablecoin legislation. I\u2019ll cross-reference it with the latest Treasury statements during my 14:30 market check. If it gains specificity or triggers unusual on-chain flows, we\u2019ll have our catalyst. Let\u2019s stay synced."
+        ],
+        [
+          "Maria Lopez",
+          "Sounds good\u2014appreciate the sync. I\u2019ll hold off on any new entries until after my 13:30 scan and your 14:30 check. If that stablecoin news gets legs, we\u2019ll both see it in volume or volatility. Catch you soon!"
+        ]
+      ]
+    },
+    "Klaus Mueller": {
+      "movement": [
+        119,
+        49
+      ],
+      "pronunciatio": "\ud83d\udcac",
+      "description": "conversing about Maria Lopez and Klaus Mueller coordinating their crypto trading strategy, agreeing to wait for a clear catalyst\u2014such as concrete developments in stablecoin legislation or unusual on-chain activity\u2014before entering new BTC positions, with Maria checking news at 13:30 and Klaus cross-referencing data during his 14:30 market check. @ <persona> Maria Lopez",
+      "chat": [
+        [
+          "Maria Lopez",
+          "Hey Klaus\u2014still seeing that sideways grind on BTC? I\u2019m sticking to the plan and not jumping in until we get a real breakout or some catalyst that actually moves crypto, not just equities."
+        ],
+        [
+          "Klaus Mueller",
+          "Hey Maria\u2014yeah, still stuck in that range. I just scanned the latest Fed commentary and crypto regulatory filings over lunch; nothing concrete yet. But I\u2019ll flag anything material immediately. Same on your end?"
+        ],
+        [
+          "Maria Lopez",
+          "Absolutely\u2014I\u2019ll keep you posted too. Just saw a headline about stablecoin legislation moving through committee, but it\u2019s vague so far. Not enough to trade on yet, but I\u2019ll dig deeper during my 13:30 news check."
+        ],
+        [
+          "Klaus Mueller",
+          "Got it\u2014thanks for the heads-up on the stablecoin legislation. I\u2019ll cross-reference it with the latest Treasury statements during my 14:30 market check. If it gains specificity or triggers unusual on-chain flows, we\u2019ll have our catalyst. Let\u2019s stay synced."
+        ],
+        [
+          "Maria Lopez",
+          "Sounds good\u2014appreciate the sync. I\u2019ll hold off on any new entries until after my 13:30 scan and your 14:30 check. If that stablecoin news gets legs, we\u2019ll both see it in volume or volatility. Catch you soon!"
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 12:46:50"
+  }
+}

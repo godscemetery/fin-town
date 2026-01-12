@@ -1,0 +1,34 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        73,
+        16
+      ],
+      "pronunciatio": "\ud83d\udcdd\ud83d\udcc4",
+      "description": "[(ID:IzqMGj) Monday February 13 -- 12:00 PM] Activity: Isabella is wrapping up her morning analysis work, organizing her notes, and preparing for her midday news check at 12 (preparing a clean notepad and pen for real-time note-taking during the upcoming news scan) @ the Ville:Isabella Rodriguez's apartment:main room:desk",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        119,
+        47
+      ],
+      "pronunciatio": "\ud83d\udcac\ud83d\udcca",
+      "description": "[ (conversing about Maria Lopez and Klaus Mueller coordinating their crypto trading strategy, agreeing to wait for a clear catalyst\u2014such as concrete developments in stablecoin legislation or unusual on-chain activity\u2014before entering new BTC positions, with Maria checking news at 13:30 and Klaus cross-referencing data during his 14:30 market check.) @ the Ville:Dorm for Oak Hill College:common room:common room table",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        119,
+        47
+      ],
+      "pronunciatio": "\ud83d\udcac\ud83d\udcca",
+      "description": "[ (conversing about Maria Lopez and Klaus Mueller coordinating their crypto trading strategy, agreeing to wait for a clear catalyst\u2014such as concrete developments in stablecoin legislation or unusual on-chain activity\u2014before entering new BTC positions, with Maria checking news at 13:30 and Klaus cross-referencing data during his 14:30 market check.) @ the Ville:Dorm for Oak Hill College:common room:common room table",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 12:52:10"
+  }
+}

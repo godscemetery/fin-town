@@ -1,0 +1,34 @@
+{
+  "persona": {
+    "Isabella Rodriguez": {
+      "movement": [
+        74,
+        14
+      ],
+      "pronunciatio": "\ud83d\udca7\ud83d\ude34",
+      "description": "[(ID:2Bntzl) Monday February 13 -- 08:00 AM] Activity: Isabella is waking up, freshening up, and preparing for her morning routine, including light stretching and hydration (drinking a full glass of room-temperature water to rehydrate after sleep) @ the Ville:Isabella Rodriguez's apartment:main room:refrigerator",
+      "chat": null
+    },
+    "Maria Lopez": {
+      "movement": [
+        123,
+        55
+      ],
+      "pronunciatio": "\ud83d\udecf\ufe0f\ud83d\udebd",
+      "description": "[(ID:cBGPWd) Monday February 13 -- 08:00 AM] Activity: Maria is completing her morning routine (brushing teeth, washing face, getting dressed) and preparing for her day of trading (getting out of bed and walking to the bathroom) @ the Ville:Dorm for Oak Hill College:woman's bathroom:toilet",
+      "chat": null
+    },
+    "Klaus Mueller": {
+      "movement": [
+        116,
+        51
+      ],
+      "pronunciatio": "\ud83d\udecf\ufe0f\ud83e\uddf9",
+      "description": "[(ID:Puk4pE) Monday February 13 -- 08:00 AM] Activity: Klaus is completing his morning routine and preparing breakfast, having just woken up at 7:00 AM per his typical schedule (making his bed and tidying up his bedroom) @ the Ville:Dorm for Oak Hill College:Klaus Mueller's room:bed",
+      "chat": null
+    }
+  },
+  "meta": {
+    "curr_time": "February 13, 2023, 08:05:10"
+  }
+}

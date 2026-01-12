@@ -6,6 +6,7 @@ import os
 import string
 import random
 import json
+import re
 from os import listdir
 import os
 
@@ -54,9 +55,21 @@ def demo(request, sim_code, step, play_speed="2"):
   persona_names = []
   persona_names_set = set()
   for p in list(raw_all_movement["0"].keys()): 
+    if " " in p:
+      display_name = p
+    else:
+      display_name = re.sub(r"(?<!^)(?=[A-Z])", " ", p)
+    display_parts = display_name.split()
+    if len(display_parts) >= 2:
+      initial = (display_parts[0][0] + display_parts[-1][0]).upper()
+    elif display_parts:
+      initial = display_parts[0][0].upper()
+    else:
+      initial = ""
     persona_names += [{"original": p, 
+                       "display": display_name,
                        "underscore": p.replace(" ", "_"), 
-                       "initial": p[0] + p.split(" ")[-1][0]}]
+                       "initial": initial}]
     persona_names_set.add(p)
 
   # <all_movement> is the main movement variable that we are passing to the 
@@ -312,7 +325,6 @@ def path_tester_update(request):
     outfile.write(json.dumps(camera, indent=2))
 
   return HttpResponse("received")
-
 
 
 

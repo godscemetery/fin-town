@@ -8,40 +8,24 @@ Variables:
 !<INPUT 4>! -- Object name 
 
 <commentblockmarker>###</commentblockmarker>
-Task: Describe the current state of an object that is being used by someone.
+Task: We want to understand the state of an object that is being used by someone. 
 
-Rules:
-1) Output ONLY ONE short sentence. No explanations. No "Let's think". No "Step 1/2". No extra lines.
-2) The sentence MUST start with the object name and the word "is" (format: "<object> is ...").
-3) Keep it concrete and physical when possible (e.g., "is being heated", "is running with water", "is being used to write email").
-4) Do NOT include the person's name in the output.
-5) Do NOT use quotes or markdown.
-
-Examples:
-Input:
-Object: oven
-Persona: Sam Johnson
-Event: eating breakfast at/using the oven
-Output:
-oven is being heated to cook breakfast.
+Let's think step by step. 
+We want to know about oven's state. 
+Step 1. Sam Johnson is eating breakfast at/using the oven. 
+Step 2. Describe the cooking utensils's state: oven is being heated to cook breakfast. 
 ---
-Input:
-Object: computer
-Persona: Michael Bernstein
-Event: writing email at/using the computer
-Output:
-computer is being used to write email.
+Let's think step by step. 
+We want to know about computer's state. 
+Step 1. Michael Bernstein is writing email at/using the computer. 
+Step 2. Describe the computer's state: computer is being used to write email.
 ---
-Input:
-Object: sink
-Persona: Tom Kane
-Event: washing his face at/using the sink
-Output:
-sink is running with water.
+Let's think step by step. 
+We want to know about sink's state. 
+Step 1. Tom Kane is washing his face at/using the sink.
+Step 2. Describe the sink's state: sink is running with water.
 ---
-Input:
-Object: !<INPUT 0>!
-Persona: !<INPUT 1>!
-Event: !<INPUT 2>!
-Output:
-!<INPUT 4>! is
+Let's think step by step. 
+We want to know about !<INPUT 0>!'s state. 
+Step 1. !<INPUT 1>! is at/using the !<INPUT 2>!.
+Step 2. Describe the !<INPUT 3>!'s state: !<INPUT 4>! is

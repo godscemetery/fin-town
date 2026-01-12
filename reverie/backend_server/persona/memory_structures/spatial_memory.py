@@ -84,94 +84,31 @@ class MemoryTree:
 
   def get_str_accessible_arena_game_objects(self, arena):
     """
-    输入保持与原版一致：arena 是 "world:sector:arena" 的字符串
-    增强：
-    - 允许多段（取前三段）
-    - 去掉 {}
-    - 大小写兜底
-    - 在失败时打印 tree 结构用于定位 <random> 根因
+    Get a str list of all accessible game objects that are in the arena. If 
+    temp_address is specified, we return the objects that are available in
+    that arena, and if not, we return the objects that are in the arena our
+    persona is currently in. 
+
+    INPUT
+      temp_address: optional arena address
+    OUTPUT 
+      str list of all accessible game objects in the gmae arena. 
+    EXAMPLE STR OUTPUT
+      "phone, charger, bed, nightstand"
     """
-    debug = False
-    # ---------- 1. 基本合法性 ----------
-    if not isinstance(arena, str):
-        if debug:
-            print("[TREE DEBUG] arena is not str:", repr(arena))
-        return ""
+    curr_world, curr_sector, curr_arena = arena.split(":")
 
-    parts = arena.split(":")
-    if len(parts) < 3:
-        if debug:
-            print("[TREE DEBUG] arena split < 3:", repr(arena))
-        return ""
+    if not curr_arena: 
+      return ""
 
-    curr_world, curr_sector, curr_arena = parts[0], parts[1], parts[2]
-
-    if not curr_arena:
-        if debug:
-            print("[TREE DEBUG] empty curr_arena:", repr(arena))
-        return ""
-
-    # ---------- 2. arena 名称清洗 ----------
-    raw_arena = str(curr_arena).strip()
-    cleaned_arena = raw_arena.strip("{}").strip()
-
-    candidates = [
-        raw_arena,
-        raw_arena.lower(),
-        cleaned_arena,
-        cleaned_arena.lower(),
-    ]
-
-    # ---------- 3. world / sector 查找 ----------
-    if curr_world not in self.tree:
-        if debug:
-            print("[TREE DEBUG] world not found:", repr(curr_world))
-            print("[TREE DEBUG] available worlds:", list(self.tree.keys())[:10])
-            print("[TREE DEBUG] original arena:", repr(arena))
-        return ""
-
-    if curr_sector not in self.tree[curr_world]:
-        if debug:
-            print("[TREE DEBUG] sector not found:", repr(curr_sector))
-            print("[TREE DEBUG] available sectors:",
-                  list(self.tree[curr_world].keys())[:10])
-            print("[TREE DEBUG] original arena:", repr(arena))
-        return ""
-
-    sector_dict = self.tree[curr_world][curr_sector]
-    if not sector_dict:
-        if debug:
-            print("[TREE DEBUG] sector exists but empty:", repr(curr_sector))
-        return ""
-
-    # ---------- 4. arena key 匹配 ----------
-    for key in candidates:
-        if key in sector_dict:
-            try:
-                return ", ".join(list(sector_dict[key]))
-            except Exception as e:
-                if debug:
-                    print("[TREE DEBUG] error reading objects for key:", repr(key))
-                    print("[TREE DEBUG] exception:", e)
-                return ""
-
-    # ---------- 5. 走到这里 = 真正导致 <random> 的地方 ----------
-    if debug:
-        print("[TREE DEBUG] arena not found in sector")
-        print("  world  =", repr(curr_world))
-        print("  sector =", repr(curr_sector))
-        print("  arena(raw)    =", repr(raw_arena))
-        print("  arena(clean) =", repr(cleaned_arena))
-        print("  tried keys   =", candidates)
-        print("  available arenas =", list(sector_dict.keys()))
-        print("  original arena string =", repr(arena))
-
+    # Normalize arena names that may carry braces/extra spaces.
+    curr_arena_norm = curr_arena.strip().strip("{}").lower()
+    sector_tree = self.tree.get(curr_world, {}).get(curr_sector, {})
+    if curr_arena in sector_tree:
+      return ", ".join(list(sector_tree[curr_arena]))
+    if curr_arena_norm in sector_tree:
+      return ", ".join(list(sector_tree[curr_arena_norm]))
     return ""
-
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -180,7 +117,6 @@ if __name__ == '__main__':
   x.print_tree()
 
   print (x.get_str_accessible_sector_arenas("dolores double studio:double studio"))
-
 
 
 

@@ -95,6 +95,8 @@
 
 	var personas = {};
 	var pronunciatios = {};
+	var chat_history = {};
+	var chat_history_last = {};
 	let anims_direction;
 	let pre_anims_direction;
 	let pre_anims_direction_dict = {};
@@ -120,6 +122,60 @@
 	let execute_count_max = tile_width/movement_speed;
 	let execute_count = execute_count_max;
 	let movement_target = {};
+
+
+	function append_chat_history(persona_key, chat_content_raw) {
+		if (chat_content_raw == null) {
+			return;
+		}
+		let payload = JSON.stringify(chat_content_raw);
+		if (chat_history_last[persona_key] === payload) {
+			return;
+		}
+		let history = chat_history[persona_key] || [];
+		let prior_raw = null;
+		if (chat_history_last[persona_key]) {
+			try {
+				prior_raw = JSON.parse(chat_history_last[persona_key]);
+			} catch (e) {
+				prior_raw = null;
+			}
+		}
+		if (Array.isArray(prior_raw) && prior_raw.length > 0 &&
+				chat_content_raw.length >= prior_raw.length) {
+			let is_prefix = true;
+			for (let i = 0; i < prior_raw.length; i++) {
+				if (prior_raw[i][0] !== chat_content_raw[i][0] ||
+						prior_raw[i][1] !== chat_content_raw[i][1]) {
+					is_prefix = false;
+					break;
+				}
+			}
+			if (is_prefix) {
+				for (let i = prior_raw.length; i < chat_content_raw.length; i++) {
+					history.push(chat_content_raw[i]);
+				}
+			} else {
+				history = history.concat(chat_content_raw);
+			}
+		} else {
+			history = history.concat(chat_content_raw);
+		}
+		chat_history[persona_key] = history;
+		chat_history_last[persona_key] = payload;
+	}
+
+	function render_chat_history(persona_key) {
+		let history = chat_history[persona_key] || [];
+		if (!history.length) {
+			return "<em>None at the moment</em>";
+		}
+		let chat_content = "";
+		for (let j = 0; j < history.length; j++) {
+			chat_content += history[j][0] + ": " + history[j][1] + "<br>";
+		}
+		return chat_content;
+	}
 	
 
 	// ###########################################################################
@@ -525,15 +581,8 @@
 	        let curr_persona_name = Object.keys(personas)[i];
 	        let curr_persona_name_os = curr_persona_name.replace(/ /g,"_");
 	        let description_content = execute_movement["persona"][curr_persona_name]["description"];
-	        let chat_content = ""
-
-	        if (execute_movement["persona"][curr_persona_name]["chat"] != null ){
-		        for (let j=0; j<execute_movement["persona"][curr_persona_name]["chat"].length; j++) { 
-		        	chat_content += execute_movement["persona"][curr_persona_name]["chat"][j][0] + ": " + execute_movement["persona"][curr_persona_name]["chat"][j][1] + "<br>"
-		        }
-		      } else {
-		      	chat_content = "<em>None at the moment</em>"
-		      }
+	        append_chat_history(curr_persona_name, execute_movement["persona"][curr_persona_name]["chat"]);
+	        let chat_content = render_chat_history(curr_persona_name);
 	        // action_description += description_content + "<br>";
 
 	        document.getElementById("current_action__"+curr_persona_name_os).innerHTML = description_content.split("@")[0];
@@ -551,8 +600,6 @@
 	var play_button=document.getElementById("play_button");
 	var pause_button=document.getElementById("pause_button");
 </script>
-
-
 
 
 

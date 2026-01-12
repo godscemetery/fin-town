@@ -1,14 +1,10 @@
+generate_pronunciatio_v1.txt
+
 Variables: 
 !<INPUT 0>! -- Action description
 
 <commentblockmarker>###</commentblockmarker>
-Task: Convert the given action description into emojis.
-
-Requirements:
-- Use at most TWO emojis.
-- Do NOT output any words, punctuation or explanations.
-- Do NOT output quotes or brackets.
-- Output ONLY the emoji characters (no spaces around them).
+Convert an action description to an emoji (important: use two or less emojis).
 
 Action description: !<INPUT 0>!
 Emoji:
